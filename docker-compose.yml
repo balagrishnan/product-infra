@@ -25,5 +25,6 @@ services:
 
 # Explicit network to tie all future services together cleanly
 networks:
-  product-network:
+  default:
     name: product-network
+    external: true

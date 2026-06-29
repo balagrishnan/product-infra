@@ -9,15 +9,24 @@ pipeline {
             }
         }
 
+        stage('Pre-Cleanup Conflicts') {
+            steps {
+                script {
+                    echo 'Force removing any pre-existing conflicting containers...'
+                    // This stops and removes any loose containers using the conflicting names
+                    try { bat 'docker rm -f kafka-broker || ver > nul' } catch(Exception e) {}
+                    try { bat 'docker rm -f zookeeper-local || ver > nul' } catch(Exception e) {}
+                }
+            }
+        }
+
         stage('Deploy Infra via Docker Compose') {
             steps {
                 script {
-                    echo 'Stopping and cleaning old infrastructure containers...'
-                    // Shut down previous infra containers and wipe anonymous runtime volumes
+                    echo 'Stopping and cleaning this projects previous compose stack...'
                     bat 'docker-compose down -v --remove-orphans || ver > nul'
 
                     echo 'Launching Kafka & Zookeeper Core Services...'
-                    // Launch infrastructure detached in the background
                     bat 'docker-compose up -d'
 
                     echo 'Waiting for Kafka broker to complete self-initialization...'
@@ -30,26 +39,9 @@ pipeline {
             steps {
                 script {
                     echo 'Verifying running infrastructure components...'
-                    bat 'docker ps --filter name=kafka-local'
-
-                    echo 'Creating product_updates topic if it does not exist...'
-                    try {
-                        bat 'docker exec kafka-local kafka-topics --create --topic product_updates --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 || ver > nul'
-                        echo 'Topic product_updates verified successfully.'
-                    } catch (Exception e) {
-                        echo 'Topic might already exist, skipping configuration.'
-                    }
+                    bat 'docker ps --filter name=kafka-broker'
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Core Event Streaming Infrastructure Deployed Successfully!'
-        }
-        failure {
-            echo 'Infrastructure deployment pipeline failed. Check logs above.'
         }
     }
 }
