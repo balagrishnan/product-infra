@@ -21,19 +21,20 @@ pipeline {
         }
 
         stage('Deploy Infra via Docker Compose') {
-            steps {
-                script {
-                    echo 'Stopping and cleaning this projects previous compose stack...'
-                    bat 'docker-compose down -v --remove-orphans || ver > nul'
+                    steps {
+                        script {
+                            echo 'Stopping and cleaning this projects previous compose stack...'
+                            bat 'docker-compose down -v --remove-orphans || ver > nul'
 
-                    echo 'Launching Kafka & Zookeeper Core Services...'
-                    bat 'docker-compose up -d'
+                            echo 'Launching Kafka Core Services...'
+                            bat 'docker-compose up -d'
 
-                    echo 'Waiting for Kafka broker to complete self-initialization...'
-                    bat 'timeout /t 15 /nobreak'
+                            echo 'Waiting for Kafka broker to complete self-initialization...'
+                            // FIXED: Replaced bat 'timeout ...' with Jenkins native sleep
+                            sleep time: 15, unit: 'SECONDS'
+                        }
+                    }
                 }
-            }
-        }
 
         stage('Verify Core Topics') {
             steps {
