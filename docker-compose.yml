@@ -11,13 +11,12 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
 
-      # Define three listeners: DOCKER, HOST, and CONTROLLER
+      # Define your listeners
       KAFKA_LISTENERS: DEPLOYED_CONTAINERS://0.0.0.0:29092,LOCAL_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-
-      # EXPLANATION FOR ADVERTISED LISTENERS:
-      # 1. Containers inside "product-network" talk to 'kafka-broker:29092'
-      # 2. Tools outside Docker (Postman/Local code) talk to 'host.docker.internal:9092'
       KAFKA_ADVERTISED_LISTENERS: DEPLOYED_CONTAINERS://kafka-broker:29092,LOCAL_HOST://host.docker.internal:9092
+
+      # FIXED: Explicitly define the inter-broker listener name matching your new config
+      KAFKA_INTER_BROKER_LISTENER_NAME: DEPLOYED_CONTAINERS
 
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DEPLOYED_CONTAINERS:PLAINTEXT,LOCAL_HOST:PLAINTEXT
@@ -28,7 +27,6 @@ services:
     networks:
       - product-network
 
-# FIXED NETWORK BLOCK: Tells compose exactly where to find 'product-network'
 networks:
   product-network:
     external: true
